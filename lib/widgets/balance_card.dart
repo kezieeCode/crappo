@@ -1,16 +1,23 @@
-import 'package:crypto_tracker/core/res/color.dart';
-import 'package:crypto_tracker/views/home.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:jumping_dot/jumping_dot.dart';
 import 'package:sizer/sizer.dart';
-
+import 'dart:math';
+import '../core/res/color.dart';
+import '../core/res/particles.dart';
+import '../models/particle.dart';
 import '../services/apis.dart';
+import '../views/home.dart';
+import 'credit_painter.dart';
 
-class CryptoCard extends StatelessWidget {
-  const CryptoCard({
-    Key key,
-  }) : super(key: key);
+class BalanceCard extends StatefulWidget {
+  const BalanceCard({Key key}) : super(key: key);
 
+  @override
+  State<BalanceCard> createState() => _BalanceCardState();
+}
+
+class _BalanceCardState extends State<BalanceCard> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -54,7 +61,7 @@ class CryptoCard extends StatelessWidget {
                     width: 20,
                   ),
                   const Text(
-                    "Interest Balance",
+                    "Deposited  Balance",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -80,7 +87,7 @@ class CryptoCard extends StatelessWidget {
                       future: HttpService().userInfo(),
                       builder: (BuildContext context, AsyncSnapshot snapshot) {
                         if (snapshot.hasData) {
-                          return Text("\$${snapshot.data['interest_balance']}",
+                          return Text("\$${snapshot.data['account_balance']}",
                               style: TextStyle(
                                   fontSize: 30, fontWeight: FontWeight.bold));
                         } else if (snapshot.hasError) {
@@ -105,7 +112,7 @@ class CryptoCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 32, right: 20),
                 child: Text(
-                  "Withdrawable on maturity",
+                  "Daily deposit interest of 30% ",
                   style: TextStyle(
                     fontWeight: FontWeight.w300,
                     fontSize: 14,

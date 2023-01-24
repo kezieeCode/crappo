@@ -1,3 +1,4 @@
+import 'package:crypto_tracker/services/apis.dart';
 import 'package:crypto_tracker/views/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,13 +10,16 @@ import 'package:flutter_awesome_alert_box/flutter_awesome_alert_box.dart';
 
 class WithdrawalDetails extends StatefulWidget {
   final title;
-  const WithdrawalDetails({Key key, this.title}) : super(key: key);
+  final coin_type;
+  const WithdrawalDetails({Key key, this.title, this.coin_type})
+      : super(key: key);
 
   @override
   State<WithdrawalDetails> createState() => _WithdrawalDetailsState();
 }
 
 final amountController = TextEditingController();
+final addressController = TextEditingController();
 
 class _WithdrawalDetailsState extends State<WithdrawalDetails> {
   final LocalAuthentication auth = LocalAuthentication();
@@ -56,8 +60,8 @@ class _WithdrawalDetailsState extends State<WithdrawalDetails> {
         context: context,
         type: QuickAlertType.success,
         onConfirmBtnTap: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (context) => const HomeScreen()));
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => HomeScreen()));
         },
         title: 'Withdraw successful',
         text: 'Crappo credits you in the next 10 minutes',
@@ -143,7 +147,7 @@ class _WithdrawalDetailsState extends State<WithdrawalDetails> {
           Padding(
             padding: EdgeInsets.only(left: 4.w, right: 4.w),
             child: TextFormField(
-              controller: amountController,
+              controller: addressController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                   suffixIcon: Icon(
@@ -164,7 +168,11 @@ class _WithdrawalDetailsState extends State<WithdrawalDetails> {
               height: 6.h,
               child: MaterialButton(
                   color: const Color.fromARGB(255, 105, 5, 123),
-                  onPressed: _authenticateWithBiometrics,
+                  onPressed: () {
+                    HttpService().withdrawtAmount(context, widget.coin_type,
+                        addressController, amountController);
+                  },
+                  // _authenticateWithBiometrics,
                   child: Row(
                     children: [
                       const SizedBox(

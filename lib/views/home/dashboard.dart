@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'dart:math';
+import 'package:crypto_tracker/services/apis.dart';
 import 'package:crypto_tracker/views/details/detail_screen.dart';
 import 'package:crypto_tracker/views/withdraw/withdraw.dart';
+import 'package:jumping_dot/jumping_dot.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:slide_popup_dialog_null_safety/slide_popup_dialog.dart'
     as slideDialog;
 import 'package:crypto_tracker/core/res/color.dart';
@@ -15,8 +20,13 @@ import 'package:crypto_tracker/widgets/custom_graph.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
+import '../../widgets/balance_card.dart';
+
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key key}) : super(key: key);
+  final account_balance;
+  final interest_balance;
+  const DashboardScreen({Key key, this.account_balance, this.interest_balance})
+      : super(key: key);
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -24,18 +34,12 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
-  List<Particle> _particlesList = [];
-  final Random _random = Random(DateTime.now().millisecondsSinceEpoch);
-  final maxSpeed = 2;
-  final maxTheta = 2 * pi;
-  final maxRadius = 10;
-  AnimationController _particleAnimationController;
-  Animation<double> _particleAnimation;
   List<SplineAreaData> firstChartData, secondChartData;
-
+  Future _getuser;
   @override
   initState() {
     super.initState();
+    _getuser = HttpService().userInfo();
     firstChartData = <SplineAreaData>[
       SplineAreaData(2010, 8.53, 3.3),
       SplineAreaData(2011, 9.5, 5.4),
@@ -58,47 +62,29 @@ class _DashboardScreenState extends State<DashboardScreen>
       SplineAreaData(2017, 9.6, 1.56),
       SplineAreaData(2018, 12.43, 2.1),
     ];
-
-    _particleAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    );
-
-    _particleAnimation =
-        Tween<double>(begin: 0, end: 300).animate(_particleAnimationController)
-          ..addListener(() {
-            setState(() {});
-          })
-          ..addStatusListener((status) {
-            if (status == AnimationStatus.completed) {
-              _particleAnimationController.repeat();
-            } else if (status == AnimationStatus.dismissed) {
-              _particleAnimationController.forward();
-            }
-          });
-    _particleAnimationController.forward();
-
-    _particlesList = List.generate(5, (index) {
-      final color = ParticleGenerator.getRandomColor(_random);
-      return Particle(
-        position: const Offset(-1, -1),
-        color: color,
-        speed: _random.nextDouble() * maxSpeed,
-        theta: _random.nextDouble() * maxTheta,
-        radius: _random.nextDouble() * maxRadius,
-      );
-    }).toList();
   }
 
   @override
-  void dispose() {
-    _particleAnimationController.dispose();
-    super.dispose();
-  }
-
   _navigate(Widget child) {
     Navigator.push(context,
         PageTransition(type: PageTransitionType.leftToRight, child: child));
+  }
+
+  Future userInfo() async {
+    final pref = await SharedPreferences.getInstance();
+    var user_id = pref.getString("user_id");
+    var uri = 'https://crappo.000webhostapp.com/apis/get/get_user.php';
+    var data = {"id": user_id};
+    var response =
+        await http.get(Uri.parse(uri).replace(queryParameters: data));
+    var results = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      // print(user_id);
+      // print(response.body);
+      return results;
+    } else {
+      throw Exception();
+    }
   }
 
   @override
@@ -109,69 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
           child: Column(
             children: [
-              Container(
-                width: 100.w,
-                height: 180,
-                decoration: BoxDecoration(
-                  gradient: AppColors.getDarkLinearGradient(Colors.blue),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: CustomPaint(
-                  painter: CreditCardPainter(
-                    _particleAnimation.value,
-                    particlesList: _particlesList,
-                    random: _random,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Deposited wallet Balance",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            letterSpacing: 1.6,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Welcome bonus +30% expired in 21 days",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.6),
-                            fontWeight: FontWeight.w300,
-                            fontSize: 12,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20, left: 40),
-                          child: Row(
-                            children: const [
-                              Padding(
-                                padding: EdgeInsets.only(bottom: 17),
-                                child: Text(
-                                  "USD",
-                                ),
-                              ),
-                              SizedBox(
-                                width: 4,
-                              ),
-                              Text("\$500,000",
-                                  style: TextStyle(
-                                      fontSize: 40,
-                                      fontWeight: FontWeight.bold))
-                            ],
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              const BalanceCard(),
               const SizedBox(
                 height: 20,
               ),
@@ -216,6 +140,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 MaterialPageRoute(
                                                     builder: ((context) =>
                                                         const DetailScreen(
+                                                          coin_type: "Bitcoin",
                                                           bitAdress:
                                                               "3fd4kfsfkafqxtu5zpy8s3rqyzb9uk3dhq",
                                                         ))));
@@ -236,6 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 MaterialPageRoute(
                                                     builder: ((context) =>
                                                         const DetailScreen(
+                                                          coin_type: "Ethereum",
                                                           bitAdress:
                                                               "0x34774660a06b31ae21b26ec1a34bb1f17a66a037",
                                                         ))));
@@ -256,6 +182,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 MaterialPageRoute(
                                                     builder: ((context) =>
                                                         const DetailScreen(
+                                                          coin_type: "BNB",
                                                           bitAdress:
                                                               "0x384bcbab7463b902f39c790234e847fc623c0947",
                                                         ))));
@@ -278,6 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 MaterialPageRoute(
                                                     builder: ((context) =>
                                                         const DetailScreen(
+                                                          coin_type: "Cardano",
                                                           bitAdress:
                                                               "ddzffzcqrhsg24wp2nx8avz6wq5r1apzyvdmudsk7pu2cdhhfd1r37qctfvrprpssjxg1jrx6wtkpznfhsdodzl6anh3jvhw4zwlfqbc",
                                                         ))));
@@ -300,6 +228,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                                 MaterialPageRoute(
                                                     builder: ((context) =>
                                                         const DetailScreen(
+                                                          coin_type: "Dodge",
                                                           bitAdress:
                                                               "dsbxsk1q66yfqrtgq6dqnulzpv5hpfcwpf",
                                                         ))));

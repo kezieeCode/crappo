@@ -128,6 +128,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> {
     return InkWell(
       onTap: () {
         _navigate(WithdrawalDetails(
+          coin_type: leadingTitle,
           title: titleText,
         ));
       },

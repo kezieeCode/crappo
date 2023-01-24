@@ -17,12 +17,16 @@ class RegisterScreen extends StatefulWidget {
 }
 
 String countryString = "Select a country";
+String buttonText = "Register";
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   Future registerUser(BuildContext context) async {
+    setState(() {
+      buttonText = "Please Wait...";
+    });
     var uri = 'https://crappo.000webhostapp.com/apis/post/signup.php';
     var data = {
       "full_name": nameController.text,
@@ -30,20 +34,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
       "password": passwordController.text
     };
     print(data);
-    var response = await http.post(
-      Uri.parse(uri),
-      body: data,
-    );
-    // var newresponse = jsonDecode(response.body)['status'];
+    var response = await http.post(Uri.parse(uri),
+        headers: {"Content-Type": "application/json"}, body: jsonEncode(data));
+
     if (response.statusCode == 200) {
       print(response.body);
-      // if (newresponse == true) {
-      //   print(response.body);
-      // } else if (newresponse == false) {
-      //   print(response.body);
-      // }
+      SuccessAlertBox(
+          context: context,
+          title: 'Success!',
+          titleTextColor: Colors.green,
+          messageText: 'Signup Successful now login');
+      _navigate(const LoginScreen());
     } else {
-      throw Exception();
+      print("theres nothing${response.body}");
+      DangerAlertBox(
+          context: context,
+          title: 'Failed!',
+          titleTextColor: Colors.red,
+          messageText: 'Signup failed check details properly');
     }
   }
 
@@ -253,9 +261,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     )),
                 height: 70,
-                child: const Center(
+                child: Center(
                   child: Text(
-                    "Register",
+                    buttonText,
                     style: TextStyle(color: Colors.white),
                   ),
                 ),

@@ -1,13 +1,19 @@
+import 'dart:convert';
+import 'package:jumping_dot/jumping_dot.dart';
 import 'package:crypto_tracker/core/res/color.dart';
 import 'package:crypto_tracker/views/home/portfolio.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
-
+import 'package:http/http.dart' as http;
+import '../services/apis.dart';
 import 'home/dashboard.dart';
 import 'home/market.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key key}) : super(key: key);
+  const HomeScreen({
+    Key key,
+  }) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -19,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void initState() {
+    // HttpService().userInfo();
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -29,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
     // _runAnimation();
+
     super.initState();
   }
 
@@ -36,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   //  _screensList;
   // List<IconData> _bottomIcons;
   int _selectedBottomIndex = 1;
+
   void _runAnimation() async {
     for (int i = 0; i < 5; i++) {
       await _bellController.forward();
@@ -45,7 +54,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   final _screensList = const [
     PortfolioScreen(),
-    DashboardScreen(),
+    DashboardScreen(
+        // account_balance: u_acct_bal,
+        ),
     MarketScreen(),
   ];
   final _bottomIcons = [
@@ -73,10 +84,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       appBar: _selectedBottomIndex == 0
           ? null
           : AppBar(
-              title: const Text(
-                "Hi, Chikezie",
-                style: TextStyle(color: Colors.white),
-              ),
+              title:
+                  // Text(
+                  //   "Hi, Tunde",
+                  //   style: TextStyle(color: Colors.white),
+                  // ),
+                  FutureBuilder(
+                      future: HttpService().userInfo(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return Text(
+                            "Hi, ${snapshot.data['full_name']}",
+                            style: TextStyle(color: Colors.white),
+                          );
+                        } else if (snapshot.hasError) {
+                          return const Text(
+                            "N/A",
+                            style: TextStyle(color: Colors.white),
+                          );
+                        } else {
+                          return const JumpingDots(
+                            color: Colors.yellow,
+                            radius: 7,
+                            numberOfDots: 3,
+                          );
+                        }
+                      }),
               centerTitle: true,
               leading: Padding(
                 padding: const EdgeInsets.only(left: 10.0, top: 10, bottom: 10),

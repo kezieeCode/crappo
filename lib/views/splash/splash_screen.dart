@@ -27,8 +27,8 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(Duration(seconds: 5), () {
       if (isLogged == true) {
         print("yes i am logged");
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => HomeScreen()));
       } else {
         print("No i am not logged");
         Navigator.push(context,

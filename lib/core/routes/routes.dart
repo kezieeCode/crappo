@@ -12,15 +12,15 @@ class RouterGenerator {
     switch (settings.name) {
       case Routes.home:
         return MaterialPageRoute(
-          builder: ((context) => const HomeScreen()),
+          builder: ((context) => HomeScreen()),
         );
       case Routes.coinDetails:
         return MaterialPageRoute(
-          builder: ((context) => const CoinScreen()),
+          builder: ((context) => CoinScreen()),
         );
       default:
         return MaterialPageRoute(
-          builder: ((context) => const HomeScreen()),
+          builder: ((context) => HomeScreen()),
         );
     }
   }

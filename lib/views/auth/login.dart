@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:crypto_tracker/views/home/dashboard.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/foundation/key.dart';
-import 'package:flutter/src/widgets/framework.dart';
+import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
+import 'package:quickalert/models/quickalert_type.dart';
+import 'package:quickalert/widgets/quickalert_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sizer/sizer.dart';
 
@@ -22,6 +25,91 @@ startSession() async {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  String loginButtonText = "Login";
+  Future loginUser(BuildContext context) async {
+    setState(() {
+      loginButtonText = "Please Wait";
+    });
+    var uri = 'https://crappo.000webhostapp.com/apis/get/login.php';
+    var data = {
+      "email": _emailController.text,
+      "password": _passwordController.text
+    };
+
+    var response = await http.get(
+      Uri.parse(uri).replace(queryParameters: data),
+    );
+    if (response.statusCode == 200) {
+      var newresponse = jsonDecode(response.body)['status'];
+
+      print(response.body);
+      if (newresponse == 3) {
+        var uId = jsonDecode(response.body)['id'];
+        final prefs = await SharedPreferences.getInstance();
+        var u_Id = prefs.setString("user_id", uId);
+        // var usersId = prefs.getString("user_id");
+        startSession();
+        QuickAlert.show(
+          context: context,
+          type: QuickAlertType.success,
+          onConfirmBtnTap: () {
+            // print(usersId);
+            _navigate(HomeScreen());
+          },
+          title: 'Welcome',
+          text:
+              'Welcome back to crappo, the best crypto investment platform you can trust',
+        );
+      } else if (newresponse == 1) {
+        QuickAlert.show(
+          context: context,
+          type: QuickAlertType.warning,
+          onConfirmBtnTap: () {
+            Navigator.pop(context);
+          },
+          title: 'Invalid Email',
+          text: 'Email is required',
+        );
+      } else if (newresponse == 2) {
+        QuickAlert.show(
+          context: context,
+          type: QuickAlertType.warning,
+          onConfirmBtnTap: () {
+            Navigator.pop(context);
+          },
+          title: 'Invalid password',
+          text: 'Password is required',
+        );
+      } else if (newresponse == 4) {
+        QuickAlert.show(
+          context: context,
+          type: QuickAlertType.error,
+          onConfirmBtnTap: () {
+            Navigator.pop(context);
+          },
+          title: 'Mispelt details',
+          text: 'Check properly',
+        );
+      }
+      // _navigate(const HomeScreen());
+
+    } else {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        onConfirmBtnTap: () {
+          Navigator.pop(context);
+        },
+        title: 'Error',
+        text:
+            'There was an error while logging you in please confirm details properly',
+      );
+      print(response.body);
+    }
+  }
+
   final gradient = const LinearGradient(
     colors: [Colors.pink, Colors.green],
   );
@@ -108,6 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Padding(
             padding: EdgeInsets.only(left: 4.w, right: 4.w),
             child: TextFormField(
+              controller: _emailController,
               decoration: const InputDecoration(
                   suffixIcon: Icon(
                 Icons.email_outlined,
@@ -125,6 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Padding(
             padding: EdgeInsets.only(left: 4.w, right: 4.w),
             child: TextFormField(
+              controller: _passwordController,
               decoration: const InputDecoration(
                   suffixIcon: Icon(
                 Icons.security_outlined,
@@ -141,8 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           InkWell(
             onTap: () {
-              startSession();
-              _navigate(const HomeScreen());
+              loginUser(context);
             },
             child: Padding(
               padding: EdgeInsets.only(left: 4.w, right: 4.w),
@@ -158,9 +247,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     )),
                 height: 70,
-                child: const Center(
+                child: Center(
                   child: Text(
-                    "Login",
+                    loginButtonText,
                     style: TextStyle(color: Colors.white),
                   ),
                 ),

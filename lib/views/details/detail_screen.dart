@@ -1,5 +1,7 @@
 import 'package:crypto_tracker/core/res/color.dart';
+import 'package:crypto_tracker/services/apis.dart';
 import 'package:crypto_tracker/views/home.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/material.dart';
@@ -8,14 +10,17 @@ import 'package:sizer/sizer.dart';
 import 'package:quickalert/quickalert.dart';
 
 class DetailScreen extends StatefulWidget {
+  final coin_type;
   final bitAdress;
-  const DetailScreen({Key key, this.bitAdress}) : super(key: key);
+  const DetailScreen({Key key, this.bitAdress, this.coin_type})
+      : super(key: key);
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
 }
 
 final amountController = TextEditingController();
+final addressController = TextEditingController();
 
 class _DetailScreenState extends State<DetailScreen> {
   @override
@@ -73,16 +78,30 @@ class _DetailScreenState extends State<DetailScreen> {
             height: 10.h,
           ),
           Padding(
+              padding: EdgeInsets.only(left: 10.w, right: 4.w),
+              child: Row(
+                children: [
+                  SizedBox(width: 300, child: Text(widget.bitAdress)),
+                  IconButton(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: widget.bitAdress))
+                            .then((_) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text("address copied to clipboard")));
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.copy,
+                        color: Colors.white,
+                      ))
+                ],
+              )),
+          Padding(
             padding: EdgeInsets.only(left: 4.w, right: 4.w),
             child: TextFormField(
-              decoration: InputDecoration(
-                  suffixIcon: Container(
-                    color: Color.fromARGB(255, 105, 5, 123),
-                    width: 60,
-                    height: 60,
-                    child: Center(child: Text("Copy")),
-                  ),
-                  hintText: widget.bitAdress,
+              controller: addressController,
+              decoration: const InputDecoration(
+                  hintText: "Paste the depositing address",
                   hintStyle: const TextStyle(color: Colors.white),
                   border: const OutlineInputBorder()),
             ),
@@ -112,18 +131,14 @@ class _DetailScreenState extends State<DetailScreen> {
               child: MaterialButton(
                   color: Color.fromARGB(255, 105, 5, 123),
                   onPressed: () {
-                    QuickAlert.show(
-                      context: context,
-                      type: QuickAlertType.info,
-                      onConfirmBtnTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const HomeScreen()));
-                      },
-                      title: 'Deposit pending',
-                      text: 'Crappo credits you in the next 10 minutes',
-                    );
+                    HttpService()
+                        .depositAmount(context, widget.coin_type,
+                            addressController, amountController)
+                        .then((value) {
+                      //This makes sure the textfield is cleared after page is pushed.
+                      addressController.clear();
+                      amountController.clear();
+                    });
                   },
                   child: Text("Dpeosit complete".toUpperCase())),
             ),
