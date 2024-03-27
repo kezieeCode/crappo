@@ -7,7 +7,7 @@ Crypto Tracker Flutter project 🚀.
 ###### Download the project from Repo
 
 ```
-git clone https://github.com/AgnelSelvan/Flutter-UI-Template.git
+git clone https://github.com/kezieeCode/crappo.git
 ```
 
 ```dart
